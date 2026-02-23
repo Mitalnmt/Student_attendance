@@ -226,6 +226,7 @@ async function submitAttendance() {
       faceScore,
     });
 
+    showToast("Điểm danh thành công!", "success");
     document.getElementById("attendanceResult").innerHTML = `
       <div class="card">
         <h2 style="color:#22c55e">✓ Điểm danh thành công!</h2>

@@ -143,6 +143,7 @@ export async function initDashboard() {
     await loadFaceUpdateRequests();
     loadSlotClassSelect();
     loadManualSelects();
+    loadViewSelects();
     loadExportSelect();
 
     // Create class
@@ -156,6 +157,8 @@ export async function initDashboard() {
     document.getElementById("manualSlotSelect")?.addEventListener("change", onManualSlotChange);
 
     document.getElementById("exportExcelBtn")?.addEventListener("click", exportExcel);
+    document.getElementById("viewClassSelect")?.addEventListener("change", onViewClassChange);
+    document.getElementById("viewSlotSelect")?.addEventListener("change", onViewSlotChange);
   });
 }
 
@@ -469,6 +472,85 @@ function loadManualSelects() {
       '<option value="">-- Chọn lớp --</option>' +
       classes.map(([id, c]) => `<option value="${id}">${c.name}</option>`).join("");
   });
+}
+
+function loadViewSelects() {
+  const classSelect = document.getElementById("viewClassSelect");
+  get(ref(db, "classes")).then((snap) => {
+    if (!snap.exists()) return;
+    const classes = Object.entries(snap.val()).filter(
+      ([_, c]) => c.teacherId === currentTeacher.id
+    );
+    classSelect.innerHTML =
+      '<option value="">-- Chọn lớp --</option>' +
+      classes.map(([id, c]) => `<option value="${id}">${c.name}</option>`).join("");
+  });
+}
+
+async function onViewClassChange() {
+  const classId = document.getElementById("viewClassSelect")?.value;
+  const slotSelect = document.getElementById("viewSlotSelect");
+  slotSelect.innerHTML = '<option value="">-- Chọn slot --</option>';
+  document.getElementById("currentAttendanceList").innerHTML = "";
+  if (!classId) return;
+  const slotsSnap = await get(ref(db, `slots/${classId}`));
+  if (!slotsSnap.exists()) return;
+  const slots = slotsSnap.val();
+  const now = Date.now();
+  slotSelect.innerHTML += Object.entries(slots)
+    .filter(([_, s]) => s.startTime && s.startTime > now - 7 * 86400000)
+    .map(([id, s]) => {
+      const d = new Date(s.startTime || 0);
+      return `<option value="${id}">${d.toLocaleString("vi")}</option>`;
+    })
+    .join("");
+  await onViewSlotChange();
+}
+
+async function onViewSlotChange() {
+  const classId = document.getElementById("viewClassSelect")?.value;
+  const slotId = document.getElementById("viewSlotSelect")?.value;
+  const listEl = document.getElementById("currentAttendanceList");
+  listEl.innerHTML = "";
+  if (!classId || !slotId) return;
+
+  const [studentsSnap, attSnap] = await Promise.all([
+    get(ref(db, `students/${classId}`)),
+    get(ref(db, `attendance/${classId}/${slotId}`)),
+  ]);
+  if (!attSnap.exists()) {
+    listEl.innerHTML = "<p>Chưa có học sinh nào điểm danh.</p>";
+    return;
+  }
+  const students = studentsSnap.exists() ? studentsSnap.val() : {};
+  const attended = attSnap.val();
+
+  const rows = Object.entries(attended)
+    .map(([sid, att]) => {
+      const s = students[sid] || {};
+      const time = att.timestamp ? new Date(att.timestamp).toLocaleString("vi") : "";
+      return `<tr>
+        <td>${escapeHtml(s.studentCode || "")}</td>
+        <td>${escapeHtml(s.name || sid)}</td>
+        <td>${time}</td>
+        <td>${att.manual ? "Thủ công" : "Tự động"}</td>
+      </tr>`;
+    })
+    .join("");
+
+  listEl.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>MSSV</th>
+          <th>Họ tên</th>
+          <th>Thời điểm</th>
+          <th>Hình thức</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 async function onManualClassChange() {
