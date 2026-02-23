@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập giáo viên</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>👨‍🏫 Đăng nhập giáo viên</h1>
+    <a href="index.html">Điểm danh</a>
+    <a href="teacher-register.html">Đăng ký giáo viên</a>
+  </header>
+
+  <div class="card">
+    <h2>Đăng nhập</h2>
+    <label>Email (username)</label>
+    <input type="email" id="email" placeholder="email@example.com">
+    <label>Mật khẩu</label>
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button type="button" id="loginBtn">Đăng nhập</button>
+    <p id="errorMsg" style="color:red; margin-top:8px;"></p>
+  </div>
+
+  <script type="module">
+    try {
+      const { initTeacherLogin } = await import("./js/teacher.js");
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => initTeacherLogin());
+      } else {
+        initTeacherLogin();
+      }
+    } catch (e) {
+      document.getElementById("errorMsg").textContent =
+        "Lỗi: " + e.message + ". Chạy qua server (npx serve .) thay vì mở file trực tiếp.";
+      console.error(e);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard giáo viên</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>👨‍🏫 Dashboard</h1>
+    <span id="teacherInfo"></span>
+    <a href="#" id="logoutBtn">Đăng xuất</a>
+  </header>
+
+  <div class="card">
+    <h2>Tạo lớp mới</h2>
+    <input type="text" id="newClassName" placeholder="Tên lớp">
+    <button id="createClassBtn">Tạo lớp</button>
+  </div>
+
+  <div class="card">
+    <h2>Danh sách lớp</h2>
+    <ul id="classList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Duyệt học sinh đăng ký</h2>
+    <ul id="pendingStudentsList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Duyệt yêu cầu cập nhật mặt</h2>
+    <ul id="faceUpdateList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Mở slot điểm danh (20 phút)</h2>
+    <select id="slotClassSelect">
+      <option value="">-- Chọn lớp --</option>
+    </select>
+    <button id="openSlotBtn">Mở slot & tạo QR</button>
+    <div id="slotStatus"></div>
+    <div id="qrContainer" class="qr-container" style="display:none;">
+      <h3>Quét QR để điểm danh</h3>
+      <div id="qrCode"></div>
+      <p id="qrText" style="margin-top:8px;font-size:0.9rem;font-family:monospace;color:#374151;"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Điểm danh thủ công</h2>
+    <select id="manualClassSelect">
+      <option value="">-- Chọn lớp --</option>
+    </select>
+    <select id="manualSlotSelect">
+      <option value="">-- Chọn slot --</option>
+    </select>
+    <div id="manualAttendanceList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Xuất Excel</h2>
+    <select id="exportClassSelect">
+      <option value="">-- Chọn lớp --</option>
+    </select>
+    <button id="exportExcelBtn">Xuất Excel</button>
+  </div>
+
+  <script type="module">
+    import { initDashboard } from "./js/teacher.js";
+    document.addEventListener("DOMContentLoaded", initDashboard);
+  </script>
+</body>
+</html>

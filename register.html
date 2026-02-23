@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký học sinh</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>📝 Đăng ký học sinh</h1>
+    <a href="index.html">Điểm danh</a>
+    <a href="teacher-login.html">Đăng nhập giáo viên</a>
+  </header>
+
+  <div class="card">
+    <h2>Chọn trường & lớp</h2>
+    <label>Trường</label>
+    <select id="schoolSelect">
+      <option value="">-- Chọn trường --</option>
+    </select>
+    <label>Lớp</label>
+    <select id="classSelect">
+      <option value="">-- Chọn lớp --</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Thông tin cá nhân</h2>
+    <label>Mã số sinh viên (MSSV)</label>
+    <input type="text" id="studentCode" placeholder="MSSV - unique trong lớp">
+    <label>Họ tên</label>
+    <input type="text" id="studentName" placeholder="Họ tên đầy đủ">
+  </div>
+
+  <div class="card">
+    <h2>Chụp khuôn mặt</h2>
+    <p>Ảnh sẽ dùng để nhận diện khi điểm danh. Chỉ lưu embedding, không lưu ảnh.</p>
+    <button id="startCameraBtn">Mở camera</button>
+  </div>
+
+  <div id="cameraSection" class="card hidden">
+    <div class="video-container">
+      <video id="videoEl" width="480" height="360" autoplay playsinline></video>
+    </div>
+    <canvas id="faceCanvas"></canvas>
+    <button id="captureBtn">Chụp & Đăng ký</button>
+  </div>
+
+  <div id="registerResult"></div>
+
+  <script type="module">
+    try {
+      const { initRegisterPage } = await import("./js/register.js");
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => initRegisterPage());
+      } else {
+        initRegisterPage();
+      }
+    } catch (e) {
+      document.getElementById("registerResult").innerHTML =
+        '<p style="color:red">Lỗi: ' + e.message + '. Chạy qua server (host.bat).</p>';
+    }
+  </script>
+  <style>
+    .hidden { display: none !important; }
+  </style>
+</body>
+</html>

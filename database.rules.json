@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "schools": {
+      ".read": true,
+      ".write": true
+    },
+    "teachers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "classes": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "students": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "pendingStudents": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "faceUpdateRequests": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "slots": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "attendance": {
+      ".read": "auth != null",
+      ".write": true
+    }
+  }
+}
