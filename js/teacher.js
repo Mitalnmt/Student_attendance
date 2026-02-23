@@ -28,6 +28,8 @@ const SLOT_DURATION_MS = 20 * 60 * 1000; // 20 phút
 const SLOT_RADIUS = 200;
 
 let currentTeacher = null;
+let viewSlotsUnsub = null;
+let viewAttendanceUnsub = null;
 
 /**
  * Đăng nhập giáo viên
@@ -492,19 +494,64 @@ async function onViewClassChange() {
   const slotSelect = document.getElementById("viewSlotSelect");
   slotSelect.innerHTML = '<option value="">-- Chọn slot --</option>';
   document.getElementById("currentAttendanceList").innerHTML = "";
+  if (viewSlotsUnsub) {
+    viewSlotsUnsub();
+    viewSlotsUnsub = null;
+  }
   if (!classId) return;
-  const slotsSnap = await get(ref(db, `slots/${classId}`));
-  if (!slotsSnap.exists()) return;
-  const slots = slotsSnap.val();
-  const now = Date.now();
-  slotSelect.innerHTML += Object.entries(slots)
-    .filter(([_, s]) => s.startTime && s.startTime > now - 7 * 86400000)
-    .map(([id, s]) => {
-      const d = new Date(s.startTime || 0);
-      return `<option value="${id}">${d.toLocaleString("vi")}</option>`;
-    })
-    .join("");
-  await onViewSlotChange();
+
+  const slotsRef = ref(db, `slots/${classId}`);
+  viewSlotsUnsub = onValue(slotsRef, (snap) => {
+    const now = Date.now();
+    slotSelect.innerHTML = '<option value="">-- Chọn slot --</option>';
+
+    if (!snap.exists()) {
+      onViewSlotChange();
+      return;
+    }
+
+    const slots = snap.val();
+    const entries = Object.entries(slots).filter(
+      ([_, s]) => s.startTime && s.startTime > now - 7 * 86400000
+    );
+
+    if (entries.length === 0) {
+      onViewSlotChange();
+      return;
+    }
+
+    const prevSelected = slotSelect.value;
+
+    slotSelect.innerHTML += entries
+      .map(([id, s]) => {
+        const d = new Date(s.startTime || 0);
+        return `<option value="${id}">${d.toLocaleString("vi")}</option>`;
+      })
+      .join("");
+
+    let selectedId = prevSelected && entries.find(([id]) => id === prevSelected)
+      ? prevSelected
+      : null;
+
+    if (!selectedId) {
+      const openSlots = entries.filter(([_, s]) => {
+        const st = s.startTime || 0;
+        const et = s.endTime || 0;
+        return now >= st && now <= et;
+      });
+
+      if (openSlots.length > 0) {
+        openSlots.sort((a, b) => (b[1].startTime || 0) - (a[1].startTime || 0));
+        selectedId = openSlots[0][0];
+      } else {
+        entries.sort((a, b) => (b[1].startTime || 0) - (a[1].startTime || 0));
+        selectedId = entries[0][0];
+      }
+    }
+
+    slotSelect.value = selectedId || "";
+    onViewSlotChange();
+  });
 }
 
 async function onViewSlotChange() {
@@ -513,32 +560,36 @@ async function onViewSlotChange() {
   const listEl = document.getElementById("currentAttendanceList");
   listEl.innerHTML = "";
   if (!classId || !slotId) return;
-
-  const [studentsSnap, attSnap] = await Promise.all([
-    get(ref(db, `students/${classId}`)),
-    get(ref(db, `attendance/${classId}/${slotId}`)),
-  ]);
-  if (!attSnap.exists()) {
-    listEl.innerHTML = "<p>Chưa có học sinh nào điểm danh.</p>";
-    return;
+  if (viewAttendanceUnsub) {
+    viewAttendanceUnsub();
+    viewAttendanceUnsub = null;
   }
-  const students = studentsSnap.exists() ? studentsSnap.val() : {};
-  const attended = attSnap.val();
 
-  const rows = Object.entries(attended)
-    .map(([sid, att]) => {
-      const s = students[sid] || {};
-      const time = att.timestamp ? new Date(att.timestamp).toLocaleString("vi") : "";
-      return `<tr>
+  const studentsSnap = await get(ref(db, `students/${classId}`));
+  const students = studentsSnap.exists() ? studentsSnap.val() : {};
+
+  const attRef = ref(db, `attendance/${classId}/${slotId}`);
+  viewAttendanceUnsub = onValue(attRef, (attSnap) => {
+    if (!attSnap.exists()) {
+      listEl.innerHTML = "<p>Chưa có học sinh nào điểm danh.</p>";
+      return;
+    }
+
+    const attended = attSnap.val();
+    const rows = Object.entries(attended)
+      .map(([sid, att]) => {
+        const s = students[sid] || {};
+        const time = att.timestamp ? new Date(att.timestamp).toLocaleString("vi") : "";
+        return `<tr>
         <td>${escapeHtml(s.studentCode || "")}</td>
         <td>${escapeHtml(s.name || sid)}</td>
         <td>${time}</td>
         <td>${att.manual ? "Thủ công" : "Tự động"}</td>
       </tr>`;
-    })
-    .join("");
+      })
+      .join("");
 
-  listEl.innerHTML = `
+    listEl.innerHTML = `
     <table>
       <thead>
         <tr>
@@ -551,6 +602,7 @@ async function onViewSlotChange() {
       <tbody>${rows}</tbody>
     </table>
   `;
+  });
 }
 
 async function onManualClassChange() {

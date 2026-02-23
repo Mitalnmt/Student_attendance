@@ -227,11 +227,36 @@ async function submitAttendance() {
     });
 
     showToast("Điểm danh thành công!", "success");
-    document.getElementById("attendanceResult").innerHTML = `
-      <div class="card">
-        <h2 style="color:#22c55e">✓ Điểm danh thành công!</h2>
-      </div>
-    `;
+
+    // Thông báo nổi giữa màn hình
+    const overlay = document.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "9998",
+    });
+    const box = document.createElement("div");
+    Object.assign(box.style, {
+      background: "#fff",
+      padding: "24px 32px",
+      borderRadius: "12px",
+      textAlign: "center",
+      maxWidth: "320px",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+      fontSize: "1rem",
+    });
+    box.innerHTML = `<h2 style="margin:0 0 8px;color:#16a34a;">✅ Điểm danh thành công</h2>
+      <p style="margin:0;color:#4b5563;">Bạn sẽ được chuyển về trang chính trong giây lát...</p>`;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 2000);
   } catch (e) {
     showToast(e.message || "Có lỗi xảy ra", "error");
   }
